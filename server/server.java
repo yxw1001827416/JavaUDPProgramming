@@ -1,69 +1,73 @@
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.net.*;
+import java.util.Arrays;
 
 public class server {
     public static void main(String args[]) throws IOException {
-        // UDP
-        DatagramSocket dsoc = new DatagramSocket(10008);
-        // TCP
-        ServerSocket server = new ServerSocket(10005);
 
+        int clientPort = 16666;
+        DatagramPacket datagramPacket = null;
+        byte[] successMark = "success data mark".getBytes();
+        byte[] overMark = "over mark".getBytes();
+
+        InetSocketAddress clientIp = new InetSocketAddress(InetAddress.getByName("localhost"), clientPort);
+        DatagramSocket socket = new DatagramSocket(16667, InetAddress.getByName("localhost"));
 
         while (true) {
-            // TCP get name of file
-            Socket socket = server.accept();
-            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
-            String fileName = null;
-            try (DataInputStream d = new DataInputStream(in)) {
-                fileName = d.readUTF();
-                Files.copy(d, Paths.get(fileName));
-                System.out.println(fileName);
+            try {
+                // UDP get name
+                byte[] buf = new byte[1024];
+                datagramPacket = new DatagramPacket(buf, 0, 1024);
+                socket.receive(datagramPacket);
+                String msg = new String(buf, 0, datagramPacket.getLength());
+                String[] arrOfStr = msg.split(" ");
+                System.out.println(Arrays.toString(arrOfStr));
+                String nameOfFile = arrOfStr[0];
+                String flagOfFile = arrOfStr[1];
+
+                // UDP get file
+                if (flagOfFile.equals("add")) {
+                    int reciveCount = 0;
+                    int readSize = 0;
+                    datagramPacket = new DatagramPacket(buf, 0, 1024);
+                    socket.receive(datagramPacket);
+                    FileOutputStream fileOutputStream = new FileOutputStream(nameOfFile);
+                    while ((readSize = datagramPacket.getLength()) != 0) {
+                        msg = new String(buf, 0, readSize);
+                        System.out.println(msg);
+                        if (check(overMark, buf)) {
+                            System.out.println("over mark");
+                            break;
+                        }
+                        fileOutputStream.write(buf, 0, readSize);
+                        fileOutputStream.flush();
+                        datagramPacket.setData(successMark, 0, successMark.length);
+                        System.out.println("successMark" + successMark);
+                        socket.send(datagramPacket);
+                        datagramPacket.setData(buf, 0, buf.length);
+                        socket.receive(datagramPacket);
+                        System.out.println("reciveCount:" + reciveCount++);
+                    }
+                } else if (flagOfFile.equals("remove")) {
+                    System.out.println(" ");
+                } else if (flagOfFile.equals("modify")) {
+                    System.out.println(" ");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            String nameOfFile = fileName;
-
-            // UDP get file
-            var udp = new udpFileServer();
-            udp.runServer();
-            udp = null;
-
-//            // UDP
-//            // https://4cnotes.blogspot.com/2011/12/java-file-transfer-using-udp.html?m=1
-//            byte b[] = new byte[3072];
-//            File file = new File(nameOfFile);
-//            String content = "";
-//
-//            // Todo wrap up in while
-//            DatagramPacket dp = new DatagramPacket(b, b.length);
-//            dsoc.receive(dp);
-//            content = content.concat(new String(dp.getData(), 0, dp.getLength()));
-//
-//
-//            // Write file
-//            // https://mkyong.com/java/how-to-write-to-file-in-java-fileoutputstream-example/
-//            try (FileOutputStream fop = new FileOutputStream(file)) {
-//
-//                // if file doesn't exists, then create it
-//                if (!file.exists()) {
-//                    file.createNewFile();
-//                }
-//
-//                // get the content in bytes
-//                byte[] contentInBytes = content.getBytes();
-//
-//                fop.write(contentInBytes);
-//                fop.flush();
-//                fop.close();
-//
-//                System.out.println("Done");
-//
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
         }
+    }
+
+    public static boolean check(byte[] send, byte[] receive) {
+        if (receive == null || receive.length == 0) {
+            return false;
+        }
+        for (int i = 0; i < Math.min(send.length, receive.length); i++) {
+            if (send[i] != receive[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -13,7 +13,8 @@ public class udpFileClient {
     private byte[] successMark = "success data mark".getBytes();
     private byte[] overMark = "over mark".getBytes();
 
-    public udpFileClient() {
+    public udpFileClient(String fileName) {
+        this.fileName = fileName;
         try {
             serverPort = 16667;
             serverIp = InetAddress.getByName("localhost");
@@ -70,7 +71,9 @@ public class udpFileClient {
                 datagramPacket.setData(buf, 0, readSize);
                 socket.send(datagramPacket);
                 sendCount++;
+                System.out.println("sendCount");
                 while (true) {
+                    System.out.println("while");
                     datagramPacket.setData(receiveBuf, 0, receiveBuf.length);
                     socket.receive(datagramPacket);
                     System.out.println("receiveBuf:" + receiveBuf + " VS successMark:" + successMark);
@@ -92,6 +95,7 @@ public class udpFileClient {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+//            System.out.println("123");
 //            socket.close();
         }
     }

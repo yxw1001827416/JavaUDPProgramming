@@ -45,9 +45,11 @@ public class udpFileServer {
 
     public void runServer() {
         try {
+            System.out.println("serverStart");
             byte[] buf = new byte[1024];
             datagramPacket = new DatagramPacket(buf, 0, 1024, clientIp);
             socket.receive(datagramPacket);
+            System.out.println("getServer");
             String msg = new String(buf, 0, datagramPacket.getLength());
             System.out.println("客服端ip:" + datagramPacket.getAddress() + " port:" + datagramPacket.getPort() + " -》 " + msg);
             msg = msg.substring(12);

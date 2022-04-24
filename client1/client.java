@@ -1,8 +1,11 @@
 import java.io.*;
 import java.net.*;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+
 
 public class client {
     public static void main(String args[]) throws Exception {
@@ -20,8 +23,21 @@ public class client {
 
 class SendFile implements Runnable {
 
+    String fileName;
+    int serverPort = 16667;
+    DatagramPacket datagramPacket = null;
+    byte[] successMark = "success data mark".getBytes();
+    byte[] overMark = "over mark".getBytes();
+    DatagramSocket socket = new DatagramSocket(16666);
+
+
+    SendFile() throws SocketException {
+    }
+
+
     @Override
     public void run() {
+
         while (true) {
             try {
                 Thread.sleep(1000);
@@ -30,90 +46,77 @@ class SendFile implements Runnable {
             }
             if (!GetFileName.listOfName.isEmpty()) {
                 System.out.println("This is sendFile: " + GetFileName.listOfName);
-                // Get name of file
+                // transfer name of file
                 String nameOfFile = GetFileName.listOfName.iterator().next();
                 GetFileName.listOfName.remove(nameOfFile);
                 GetFileName.nameIgnored.add(nameOfFile);
 
-                // Send file name using TCP
-                // https://stackoverflow.com/questions/15649972/how-do-i-send-file-name-with-file-using-sockets-in-java
-                File file = new File(nameOfFile);
-                Socket socket = null;
+                // Use UDP transfer name
+                String name = nameOfFile;
+                String flag = "add";
+                String msg = name + " " + flag;
                 try {
-                    socket = new Socket("localhost", 10005);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                BufferedOutputStream out = null;
-                try {
-                    out = new BufferedOutputStream(socket.getOutputStream());
-                } catch (IOException e) {
+                    datagramPacket = new DatagramPacket(msg.getBytes(), msg.length(), InetAddress.getByName("localhost"), serverPort);
+                } catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
                 try {
-                    try (DataOutputStream d = new DataOutputStream(out)) {
-                        d.writeUTF(nameOfFile);
-                        Files.copy(file.toPath(), d);
-                        System.out.println("name of file: ");
-                        System.out.println(file.toPath());
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    socket.close();
+                    socket.send(datagramPacket);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                // Send file using UDP
-                System.out.println("连接服务器成功,开始发送文件......");
-                var udp = new udpFileClient();
-                udp.sendFile(nameOfFile);
-                System.out.println("ending");
-                udp = null;
-//                if (udp.presendFile()) {
-//                    udp.sendFile(nameOfFile);
-//                }
-//                byte b[] = new byte[1024];
-//                DatagramSocket dsoc = null;
-//                try {
-//                    dsoc = new DatagramSocket();
-//                } catch (SocketException e) {
-//                    e.printStackTrace();
-//                }
-//                FileInputStream f = null;
-//                try {
-//                    f = new FileInputStream(nameOfFile);
-//                } catch (FileNotFoundException e) {
-//                    e.printStackTrace();
-//                }
-//                int i = 0;
-//                while (true) {
-//                    try {
-//                        if (!(f.available() != 0)) break;
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    try {
-//                        b[i] = (byte) f.read();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    i++;
-//                }
-//                try {
-//                    f.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//                try {
-//                    dsoc.send(new DatagramPacket(b, i, InetAddress.getLocalHost(), 10008));
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
+                // transfer file
+                fileName = nameOfFile;
+                try {
+                    RandomAccessFile accessFile = new RandomAccessFile(fileName, "r");
+                    int readSize = -1;
+                    int sendCount = 0, sendGroup = 0;
+                    byte[] buf = new byte[1024];
+                    byte[] receiveBuf = new byte[1024];
+                    datagramPacket = new DatagramPacket(buf, 1024, InetAddress.getByName("localhost"), serverPort);
+                    while ((readSize = accessFile.read(buf, 0, buf.length)) != -1) {
+                        datagramPacket.setData(buf, 0, readSize);
+                        socket.send(datagramPacket);
+                        sendCount++;
+                        System.out.println("sendCount");
+                        while (true) {
+                            System.out.println("while");
+                            datagramPacket.setData(receiveBuf, 0, receiveBuf.length);
+                            socket.receive(datagramPacket);
+                            System.out.println("receiveBuf:" + receiveBuf + " VS successMark:" + successMark);
+                            System.out.println("receiveBuf String:" + new String(receiveBuf, 0, receiveBuf.length, StandardCharsets.UTF_8) + " VS successMark String:" + new String(successMark));
+                            if (check(successMark, receiveBuf)) {
+                                sendGroup++;
+                                break;
+                            } else {
+                                System.out.println("resend sendGroup:" + sendGroup + 1);
+                                System.out.println("resend sendCount:" + sendCount++);
+                                datagramPacket.setData(buf, 0, readSize);
+                                socket.send(datagramPacket);
+                            }
+                        }
+                    }
+                    System.out.println("over mark");
+                    datagramPacket.setData(overMark, 0, overMark.length);
+                    socket.send(datagramPacket);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
+    }
+
+    public boolean check(byte[] send, byte[] receive) {
+        if (receive == null || receive.length == 0) {
+            return false;
+        }
+        for (int i = 0; i < Math.min(send.length, receive.length); i++) {
+            if (send[i] != receive[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
