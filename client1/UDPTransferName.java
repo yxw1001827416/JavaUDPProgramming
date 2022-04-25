@@ -22,7 +22,7 @@ public class UDPTransferName {
     public void transfer() {
         String name = nameOfFile;
         String flag = this.flag;
-        String msg = name + " " + flag;
+        String msg = name + "," + flag;
 
         try {
             datagramPacket = new DatagramPacket(msg.getBytes(), msg.length(), InetAddress.getByName("localhost"), serverPort);

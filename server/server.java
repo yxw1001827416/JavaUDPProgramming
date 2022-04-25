@@ -20,7 +20,7 @@ public class server {
                 datagramPacket = new DatagramPacket(buf, 0, 1024);
                 socket.receive(datagramPacket);
                 String msg = new String(buf, 0, datagramPacket.getLength());
-                String[] arrOfStr = msg.split(" ");
+                String[] arrOfStr = msg.split(",");
                 System.out.println(Arrays.toString(arrOfStr));
                 String nameOfFile = arrOfStr[0];
                 String flagOfFile = arrOfStr[1];
