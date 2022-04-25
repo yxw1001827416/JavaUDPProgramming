@@ -49,7 +49,7 @@ class SendFile implements Runnable {
                 udpTransferName.transfer();
 
                 // Use UDP transfer file
-                UDPTransferFile udpTransferFile = new UDPTransferFile(nameOfFile, serverPort, datagramPacket, socket, successMark, overMark);
+                UDPTransferFile udpTransferFile = new UDPTransferFile("./clientDoc/" + nameOfFile, serverPort, datagramPacket, socket, successMark, overMark);
                 udpTransferFile.transfer();
             }
         }
@@ -65,22 +65,15 @@ class GetFileName implements Runnable {
 
     @Override
     public void run() {
-        nameIgnored.add("GetFileName.class");
-        nameIgnored.add("TransferFile.class");
-        nameIgnored.add("TransferName.class");
-        nameIgnored.add("client.class");
         nameIgnored.add(".DS_Store");
-        nameIgnored.add("SendFile.class");
-        nameIgnored.add("TransferFile.java");
-        nameIgnored.add("TransferName.java");
-        nameIgnored.add("client.java");
+
         while (true) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            File curDir = new File(".");
+            File curDir = new File("./clientDoc/");
             getAllFiles(curDir);
         }
     }
