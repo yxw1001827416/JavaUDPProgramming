@@ -15,7 +15,7 @@ public class server {
 
         while (true) {
             try {
-                // UDP get name
+                // UDP obtain name
                 byte[] buf = new byte[1024];
                 datagramPacket = new DatagramPacket(buf, 0, 1024);
                 socket.receive(datagramPacket);
@@ -25,7 +25,7 @@ public class server {
                 String nameOfFile = arrOfStr[0];
                 String flagOfFile = arrOfStr[1];
 
-                // UDP get file
+                // UDP obtain file
                 if (flagOfFile.equals("add")) {
                     int reciveCount = 0;
                     int readSize = 0;
