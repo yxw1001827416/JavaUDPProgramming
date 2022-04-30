@@ -25,7 +25,7 @@ class SendFile implements Runnable {
     DatagramPacket datagramPacket = null;
     byte[] successMark = "success data mark".getBytes();
     byte[] overMark = "over mark".getBytes();
-    DatagramSocket socket = new DatagramSocket(16666);
+    DatagramSocket socket = new DatagramSocket();
 
     SendFile() throws SocketException {
     }

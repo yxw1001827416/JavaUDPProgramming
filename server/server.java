@@ -5,12 +5,10 @@ import java.util.Arrays;
 public class server {
     public static void main(String args[]) throws IOException {
 
-        int clientPort = 16666;
-        DatagramPacket datagramPacket = null;
+        DatagramPacket datagramPacket;
         byte[] successMark = "success data mark".getBytes();
         byte[] overMark = "over mark".getBytes();
 
-        InetSocketAddress clientIp = new InetSocketAddress(InetAddress.getByName("localhost"), clientPort);
         DatagramSocket socket = new DatagramSocket(16667, InetAddress.getByName("localhost"));
 
         while (true) {
