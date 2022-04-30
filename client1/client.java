@@ -17,6 +17,12 @@ public class client {
         Runnable runnableSendFile = new SendFile();
         Thread threadSendFile = new Thread(runnableSendFile);
         threadSendFile.start();
+
+        Thread.sleep(1000);
+
+        Runnable runnableRemoveFileName = new RemoveFileName();
+        Thread threadRemoveFileName = new Thread(runnableRemoveFileName);
+        threadRemoveFileName.start();
     }
 }
 
@@ -90,6 +96,69 @@ class GetFileName implements Runnable {
                 if (!nameIgnored.contains(f.getName())) {
                     nameSet.add(f.getName());
                 }
+            }
+        }
+    }
+}
+
+class RemoveFileName implements Runnable {
+    public static HashSet<String> prevRemoveSet = new HashSet<String>();
+    public static HashSet<String> currRemoveSet = new HashSet<String>();
+
+    @Override
+    public void run() {
+        int serverPort = 16667;
+        DatagramPacket datagramPacket = null;
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket();
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+
+        while (true) {
+            prevRemoveSet.clear();
+            currRemoveSet.clear();
+            File curDir = new File("./clientDoc/");
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            getAllFiles(curDir, prevRemoveSet);
+            System.out.println("prev " + prevRemoveSet);
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            getAllFiles(curDir, currRemoveSet);
+            System.out.println("curr " + currRemoveSet);
+
+            prevRemoveSet.removeAll(currRemoveSet);
+            if (!prevRemoveSet.isEmpty()) {
+                // Get name at prevRemoveSet
+                String fileName = prevRemoveSet.iterator().next();
+                System.out.println("Remove file name " + fileName);
+                // Use UDP transfer name
+                UDPTransferName udpTransferName = new UDPTransferName(fileName, "remove", serverPort, datagramPacket, socket);
+                udpTransferName.transfer();
+
+            }
+        }
+    }
+
+    private static void getAllFiles(File curDir, HashSet<String> fileName) {
+        File[] filesList = curDir.listFiles();
+        for (File f : filesList) {
+            if (f.isDirectory())
+                fileName.add(f.getName());
+            if (f.isFile()) {
+                fileName.add(f.getName());
             }
         }
     }

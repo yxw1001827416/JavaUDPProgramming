@@ -47,7 +47,17 @@ public class server {
                         System.out.println("reciveCount:" + reciveCount++);
                     }
                 } else if (flagOfFile.equals("remove")) {
-                    System.out.println(" ");
+                    // https://www.runoob.com/java/file-delete.html
+                    try {
+                        File file = new File(nameOfFile);
+                        if (file.delete()) {
+                            System.out.println(file.getName() + " 文件已被删除！");
+                        } else {
+                            System.out.println("文件删除失败！");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else if (flagOfFile.equals("modify")) {
                     System.out.println(" ");
                 }
