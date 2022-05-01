@@ -66,6 +66,7 @@ class GetFileName implements Runnable {
     // How to Implement set in Java
     // https://javahungry.blogspot.com/2013/08/how-sets-are-implemented-internally-in.html
     public static HashSet<String> nameSet = new HashSet<String>();
+    public static HashSet<String> copyOfNameSet = new HashSet<String>();
 
     public static ArrayList<String> nameIgnored = new ArrayList<String>();
 
@@ -91,10 +92,12 @@ class GetFileName implements Runnable {
             if (f.isDirectory())
                 if (!nameIgnored.contains(f.getName())) {
                     nameSet.add(f.getName());
+                    copyOfNameSet.add(f.getName());
                 }
             if (f.isFile()) {
                 if (!nameIgnored.contains(f.getName())) {
                     nameSet.add(f.getName());
+                    copyOfNameSet.add(f.getName());
                 }
             }
         }
@@ -102,7 +105,6 @@ class GetFileName implements Runnable {
 }
 
 class RemoveFileName implements Runnable {
-    public static HashSet<String> prevRemoveSet = new HashSet<String>();
     public static HashSet<String> currRemoveSet = new HashSet<String>();
 
     @Override
@@ -117,37 +119,33 @@ class RemoveFileName implements Runnable {
         }
 
         while (true) {
-            prevRemoveSet.clear();
+            HashSet<String> toBeRemoved = new HashSet<String>();
+            toBeRemoved.addAll(GetFileName.copyOfNameSet);
             currRemoveSet.clear();
+
             File curDir = new File("./clientDoc/");
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            getAllFiles(curDir, prevRemoveSet);
-            System.out.println("prev " + prevRemoveSet);
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            getAllFiles(curDir, currRemoveSet);
 
             getAllFiles(curDir, currRemoveSet);
             System.out.println("curr " + currRemoveSet);
 
-            prevRemoveSet.removeAll(currRemoveSet);
-            if (!prevRemoveSet.isEmpty()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            toBeRemoved.removeAll(currRemoveSet);
+            System.out.println("to be removed " + toBeRemoved);
+            if (!toBeRemoved.isEmpty()) {
                 // Get name at prevRemoveSet
-                String fileName = prevRemoveSet.iterator().next();
+                String fileName = toBeRemoved.iterator().next();
+                GetFileName.copyOfNameSet.remove(fileName);
                 System.out.println("Remove file name " + fileName);
                 // Use UDP transfer name
                 UDPTransferName udpTransferName = new UDPTransferName(fileName, "remove", serverPort, datagramPacket, socket);
                 udpTransferName.transfer();
-
             }
         }
     }

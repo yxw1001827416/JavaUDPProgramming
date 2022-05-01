@@ -49,6 +49,7 @@ public class server {
                 } else if (flagOfFile.equals("remove")) {
                     // https://www.runoob.com/java/file-delete.html
                     try {
+                        System.out.println("remove " + nameOfFile);
                         File file = new File(nameOfFile);
                         if (file.delete()) {
                             System.out.println(file.getName() + " 文件已被删除！");
