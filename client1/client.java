@@ -138,9 +138,10 @@ class RemoveFileName implements Runnable {
 
             toBeRemoved.removeAll(currRemoveSet);
             System.out.println("to be removed " + toBeRemoved);
-            if (!toBeRemoved.isEmpty()) {
+            while (!toBeRemoved.isEmpty()) {
                 // Get name at prevRemoveSet
                 String fileName = toBeRemoved.iterator().next();
+                toBeRemoved.remove(fileName);
                 GetFileName.copyOfNameSet.remove(fileName);
                 System.out.println("Remove file name " + fileName);
                 // Use UDP transfer name
@@ -154,9 +155,13 @@ class RemoveFileName implements Runnable {
         File[] filesList = curDir.listFiles();
         for (File f : filesList) {
             if (f.isDirectory())
-                fileName.add(f.getName());
+                if (!f.getName().equals(".DS_Store")) {
+                    fileName.add(f.getName());
+                }
             if (f.isFile()) {
-                fileName.add(f.getName());
+                if (!f.getName().equals(".DS_Store")) {
+                    fileName.add(f.getName());
+                }
             }
         }
     }
