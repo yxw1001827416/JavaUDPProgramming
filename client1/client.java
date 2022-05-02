@@ -321,33 +321,35 @@ class RemoveFileSynchronization implements Runnable {
 
     @Override
     public void run() {
-        try {
-            // UDP obtain name
-            byte[] nameBuf = new byte[1024];
-            datagramPacket = new DatagramPacket(nameBuf, 0, 1024);
-            socket.receive(datagramPacket);
-            String msg = new String(nameBuf, 0, datagramPacket.getLength());
-            String[] arrOfStr = msg.split(",");
-            System.out.println(Arrays.toString(arrOfStr));
-            String nameOfFile = arrOfStr[0];
-            String flagOfFile = arrOfStr[1];
+        while (true) {
+            try {
+                // UDP obtain name
+                byte[] nameBuf = new byte[1024];
+                datagramPacket = new DatagramPacket(nameBuf, 0, 1024);
+                socket.receive(datagramPacket);
+                String msg = new String(nameBuf, 0, datagramPacket.getLength());
+                String[] arrOfStr = msg.split(",");
+                System.out.println(Arrays.toString(arrOfStr));
+                String nameOfFile = arrOfStr[0];
+                String flagOfFile = arrOfStr[1];
 
-            if (flagOfFile.equals("remove")) {
-                // https://www.runoob.com/java/file-delete.html
-                try {
-                    System.out.println("remove " + nameOfFile);
-                    File file = new File("./clientDoc/" + nameOfFile);
-                    if (file.delete()) {
-                        System.out.println(file.getName() + " 文件已被删除！");
-                    } else {
-                        System.out.println("文件删除失败！");
+                if (flagOfFile.equals("remove")) {
+                    // https://www.runoob.com/java/file-delete.html
+                    try {
+                        System.out.println("remove " + nameOfFile);
+                        File file = new File("./clientDoc/" + nameOfFile);
+                        if (file.delete()) {
+                            System.out.println(file.getName() + " 文件已被删除！");
+                        } else {
+                            System.out.println("文件删除失败！");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
